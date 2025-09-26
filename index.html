@@ -1,129 +1,355 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Hoja de Entrenamiento & Registro</title>
+  <meta name="description" content="Ver plan, ver videos de ejercicios y registrar tus series. Todo guardado localmente." />
   <style>
-    /* Mantengo los estilos iguales */
+    :root { --bg:#0b0d12; --card:#121622; --muted:#7a88a6; --text:#e9eefc; --accent:#3ea6ff; --accent-2:#5cffc3; }
+    * { box-sizing: border-box; }
+    html,body { margin:0; padding:0; background:linear-gradient(180deg,#0b0d12 0%, #0e1420 100%); color:var(--text); font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; }
+    a { color: var(--accent); text-decoration: none; }
+    h1,h2,h3 { margin: 0 0 .6rem; line-height: 1.2; }
+    .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px 64px; }
+    .tag { color: var(--muted); font-size: 12px; letter-spacing:.2px; }
+    .grid { display: grid; gap: 16px; }
+    @media (min-width: 900px){ .grid-cols-3 { grid-template-columns: 1.2fr 1fr 1.4fr; } }
+    .card { background: radial-gradient(1200px 600px at 0% 0%, rgba(62,166,255,.08), transparent 60%), var(--card);
+            border:1px solid rgba(255,255,255,.06); border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .toolbar { display:flex; gap:8px; flex-wrap: wrap; align-items:center; }
+    button, select, input, textarea {
+      background:#0b1020; color:var(--text); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:10px 12px;
+      outline:none; transition: .15s ease; font-size: 14px;
+    }
+    button { cursor:pointer; background: linear-gradient(180deg,#123,#0b1020); border:1px solid rgba(62,166,255,.35); }
+    button:hover { transform: translateY(-1px); border-color: var(--accent); }
+    button.primary { background: linear-gradient(180deg,#0b5fb3, #0a3b7a); border-color: #2d8ef0; }
+    .danger { border-color: #d9534f; color: #ffd3d2; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { text-align:left; padding:10px 8px; border-bottom: 1px dashed rgba(255,255,255,.07); vertical-align: top; }
+    th { color: var(--muted); font-weight:600; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+    .pill { display:inline-block; padding:2px 8px; border-radius: 999px; background: rgba(62,166,255,.12); border:1px solid rgba(62,166,255,.3); font-size:12px; }
+    .hint { color: var(--muted); font-size: 12px; margin-top:6px; }
+    .plan-table tr:hover { background: rgba(255,255,255,.04); cursor: pointer; }
+    .flex { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .grow { flex: 1 1 auto; }
+    .right { text-align:right; }
+    .hr { height:1px; background: rgba(255,255,255,.06); margin:12px 0; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">Strong<span>Sheet</span> — Ver y Registrar Entrenamientos</div>
-    <div class="pill">Solo local • Sin registro • Datos guardados en tu navegador</div>
-  </header>
-
   <div class="wrap">
-    <div class="grid">
-      <!-- IZQUIERDA: Hoja de entrenamiento & video -->
-      <section class="card" aria-labelledby="sheetTitle">
-        <div class="head">
-          <h2 id="sheetTitle">Hoja de Entrenamiento</h2>
-          <div class="row">
-            <label class="sr-only" for="planSelect">Plan</label>
-            <select id="planSelect" title="Seleccionar un plan de entrenamiento"></select>
-            <button class="secondary" id="addAllToForm" title="Agregar todos los ejercicios al formulario">Agregar Todos</button>
-          </div>
+    <h1>Strong Sheet — Ver y Registrar Entrenamientos</h1>
+    <div class="tag">Solo local • Sin registro • Datos guardados en tu navegador</div>
+
+    <div class="grid grid-cols-3" style="margin-top:16px">
+      <!-- 1) PLAN -->
+      <section class="card">
+        <h2>Hoja de Entrenamiento</h2>
+        <div class="toolbar" style="margin:8px 0 12px">
+          <span class="pill">Plan</span>
+          <button id="btnAddAll">Agregar Todos</button>
+          <button id="btnResetPlan" class="danger">Limpiar Plan</button>
         </div>
-        <div class="body">
-          <div id="sheet" class="sheet" aria-live="polite"></div>
-          <div style="height:16px"></div>
-          <div class="card" style="background: #0c1230; border-color: rgba(126,165,255,.25);">
-            <div class="head">
-              <h2 id="videoTitle">Video Explicativo</h2>
-              <span class="badge" id="videoBadge">Selecciona un ejercicio</span>
-            </div>
-            <div class="body">
-              <iframe id="video" class="video-frame" allowfullscreen title="Reproductor de video"></iframe>
-              <div class="notice" id="videoNote" style="margin-top:8px"></div>
-            </div>
-          </div>
-        </div>
+        <table class="plan-table" id="planTable">
+          <thead>
+            <tr><th>Ejercicio</th><th class="right">Series×Reps</th></tr>
+          </thead>
+          <tbody id="planBody">
+            <!-- se llena con JS -->
+          </tbody>
+        </table>
+        <div class="hint">Tip: haz clic en un ejercicio para cargar el video y rellenar el formulario.</div>
       </section>
 
-      <!-- DERECHA: Registro -->
-      <section class="card" aria-labelledby="logTitle">
-        <div class="head">
-          <h2 id="logTitle">Registrar tus Series</h2>
+      <!-- 2) VIDEO -->
+      <section class="card">
+        <h2>Video Explicativo</h2>
+        <div class="flex" style="margin:8px 0 12px">
+          <label for="selEj">Selecciona un ejercicio</label>
+          <select id="selEj" class="grow"></select>
+        </div>
+        <div style="aspect-ratio:16/9; background:#0b1020; border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden">
+          <iframe id="yt" title="Video de ejercicio" width="100%" height="100%" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="hint" id="ejDesc" style="margin-top:8px"></div>
+      </section>
+
+      <!-- 3) FORM + LISTADO -->
+      <section class="card">
+        <h2>Registrar tus Series</h2>
+        <div class="toolbar" style="margin:8px 0 12px">
+          <button id="btnExport" class="primary">Exportar CSV</button>
+          <button id="btnDemo">Cargar Demo</button>
+          <button id="btnClearAll" class="danger">Borrar Todo</button>
+        </div>
+
+        <form id="logForm" class="grid" style="grid-template-columns:1fr; gap:10px">
+          <div class="flex">
+            <label class="pill">Fecha</label>
+            <input type="date" id="fFecha" class="grow" required />
+          </div>
+          <div class="flex">
+            <label class="pill">Ejercicio</label>
+            <input type="text" id="fEj" class="grow" placeholder="Ej. Sentadilla trasera" required />
+          </div>
+          <div class="flex">
+            <label class="pill">Series</label>
+            <input type="number" min="1" id="fSeries" class="grow" placeholder="4" required />
+          </div>
+          <div class="flex">
+            <label class="pill">Repeticiones</label>
+            <input type="number" min="1" id="fReps" class="grow" placeholder="8" required />
+          </div>
+          <div class="flex">
+            <label class="pill">Peso (kg)</label>
+            <input type="number" step="0.5" min="0" id="fPeso" class="grow" placeholder="60" required />
+          </div>
+          <div class="flex">
+            <label class="pill">RPE</label>
+            <input type="number" min="1" max="10" id="fRPE" class="grow" placeholder="7" />
+          </div>
+          <textarea id="fNotas" rows="2" placeholder="Notas opcionales (técnica, tempo, etc.)"></textarea>
           <div class="toolbar">
-            <button class="ghost" id="exportCsv">Exportar CSV</button>
-            <button class="ghost" id="seedDemo">Cargar Demo</button>
-            <button class="danger" id="clearAll">Borrar Todo</button>
+            <button type="reset">Reiniciar</button>
+            <button type="submit" class="primary">Agregar Registro</button>
           </div>
+        </form>
+
+        <div class="hr"></div>
+
+        <div class="flex" style="margin-bottom:8px">
+          <input id="filtroTxt" class="grow" placeholder="Filtrar por ejercicio o nota…" />
+          <button id="btnClearFilter">Limpiar Filtros</button>
         </div>
-        <div class="body">
-          <form id="entryForm" class="row" onsubmit="return false;">
-            <div style="flex:1 1 140px; min-width: 160px;">
-              <label for="date">Fecha</label>
-              <input type="date" id="date" required />
-            </div>
-            <div style="flex:2 1 240px; min-width: 220px;">
-              <label for="exercise">Ejercicio</label>
-              <select id="exercise" required></select>
-            </div>
-            <div style="flex:1 1 100px; min-width: 100px;">
-              <label for="sets">Series</label>
-              <input type="number" id="sets" min="1" max="20" placeholder="3" />
-            </div>
-            <div style="flex:1 1 100px; min-width: 100px;">
-              <label for="reps">Repeticiones</label>
-              <input type="number" id="reps" min="1" max="50" placeholder="10" />
-            </div>
-            <div style="flex:1 1 120px; min-width: 120px;">
-              <label for="weight">Peso (kg)</label>
-              <input type="number" id="weight" step="0.5" min="0" placeholder="20" />
-            </div>
-            <div style="flex:1 1 100px; min-width: 100px;">
-              <label for="rpe">RPE</label>
-              <input type="number" id="rpe" min="1" max="10" step="0.5" placeholder="7.5" />
-            </div>
-            <div style="flex:1 1 260px; min-width: 220px;">
-              <label for="notes">Notas</label>
-              <input type="text" id="notes" placeholder="Tempo, técnica, etc." />
-            </div>
-            <div class="row" style="width:100%; justify-content:flex-end; gap:8px;">
-              <button class="secondary" type="button" id="resetForm">Reiniciar</button>
-              <button type="submit" id="saveBtn">Agregar Registro</button>
-            </div>
-          </form>
 
-          <div style="height: 10px"></div>
-
-          <div class="row" style="gap:8px; align-items: center; margin-bottom:8px;">
-            <select id="filterExercise" title="Filtrar por ejercicio" style="min-width: 180px;"></select>
-            <input type="date" id="filterDate" title="Filtrar por fecha" />
-            <button class="ghost" id="clearFilters">Limpiar Filtros</button>
-            <span class="right notice" id="summary"></span>
-          </div>
-
-          <div class="card" style="background:#0d1432; border-color: rgba(255,255,255,.06);">
-            <div class="body" style="padding:0;">
-              <table aria-label="Tabla de registros de entrenamiento">
-                <thead>
-                  <tr>
-                    <th style="width:120px;">Fecha</th>
-                    <th>Ejercicio</th>
-                    <th style="width:120px;">Series×Reps</th>
-                    <th style="width:110px;">Peso</th>
-                    <th style="width:70px;">RPE</th>
-                    <th>Notas</th>
-                    <th style="width:140px;">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="logBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Ejercicio</th><th>Series×Reps</th><th>Peso</th><th>RPE</th><th>Notas</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"><tr><td colspan="7" class="hint">Sin registros todavía.</td></tr></tbody>
+        </table>
       </section>
     </div>
-
-    <div class="notice" style="margin-top: 18px;">Tip: haz clic en un ejercicio de la hoja para ver su video y rellenar el formulario.</div>
   </div>
 
   <script>
-    // Mantengo el código JS igual, solo cambian los textos en HTML.
+  // ------- Datos base: ejercicios + videos (puedes editar y agregar) -------
+  const EXERCISES = [
+    { id:"sentadilla", nombre:"Sentadilla trasera", plan:"4×8", video:"https://www.youtube-nocookie.com/embed/ultWZbUMPL8", desc:"Foco en cadera y rodilla; baja controlado, sube potente." },
+    { id:"banca", nombre:"Press de banca", plan:"4×6-8", video:"https://www.youtube-nocookie.com/embed/rT7DgCr-3pg", desc:"Escápulas retraídas, barra al esternón, pies firmes." },
+    { id:"muerto", nombre:"Peso muerto convencional", plan:"3×5", video:"https://www.youtube-nocookie.com/embed/op9kVnSso6Q", desc:"Columna neutra, barra pegada a las piernas, empuja el suelo." },
+    { id:"remo", nombre:"Remo con barra", plan:"3×8-10", video:"https://www.youtube-nocookie.com/embed/vT2GjY_Umpw", desc:"Tronco inclinado, tirón hacia el abdomen manteniendo espalda." },
+    { id:"militar", nombre:"Press militar", plan:"3×6-8", video:"https://www.youtube-nocookie.com/embed/B-aVuyhvLHU", desc:"Glúteos apretados, costillas abajo, empuje vertical." },
+  ];
+
+  // ------- Estado + utilidades -------
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const storageKey = "gymLogs_v1";
+
+  const state = {
+    logs: [], // {id, fecha, ej, series, reps, peso, rpe, notas}
+    filter: ""
+  };
+
+  function save() { localStorage.setItem(storageKey, JSON.stringify(state.logs)); }
+  function load() {
+    try { state.logs = JSON.parse(localStorage.getItem(storageKey)) || []; }
+    catch { state.logs = []; }
+  }
+
+  function todayISO() {
+    const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0,10);
+  }
+
+  function populatePlan() {
+    const tbody = $("#planBody"); tbody.innerHTML = "";
+    EXERCISES.forEach(ex => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${ex.nombre}</td><td class="right mono">${ex.plan}</td>`;
+      tr.addEventListener("click", () => {
+        $("#selEj").value = ex.id;
+        $("#fEj").value = ex.nombre;
+        setVideo(ex.id);
+        $("#fSeries").focus();
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function populateSelect() {
+    const sel = $("#selEj");
+    sel.innerHTML = EXERCISES.map(e => `<option value="${e.id}">${e.nombre}</option>`).join("");
+    sel.addEventListener("change", e => {
+      const id = e.target.value;
+      const found = EXERCISES.find(x => x.id === id);
+      $("#fEj").value = found?.nombre || "";
+      setVideo(id);
+    });
+  }
+
+  function setVideo(exId) {
+    const ex = EXERCISES.find(e => e.id === exId);
+    const yt = $("#yt"), d = $("#ejDesc");
+    if (ex) {
+      yt.src = ex.video + "?rel=0";
+      d.textContent = ex.desc;
+    } else {
+      yt.src = "";
+      d.textContent = "";
+    }
+  }
+
+  function renderLogs() {
+    const body = $("#logBody");
+    const q = state.filter.trim().toLowerCase();
+    let data = state.logs.slice().sort((a,b) => b.fecha.localeCompare(a.fecha));
+    if (q) {
+      data = data.filter(x => (x.ej + " " + (x.notas||"")).toLowerCase().includes(q));
+    }
+    if (!data.length) {
+      body.innerHTML = `<tr><td colspan="7" class="hint">Sin registros para mostrar.</td></tr>`;
+      return;
+    }
+    body.innerHTML = "";
+    for (const r of data) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="mono">${r.fecha}</td>
+        <td>${r.ej}</td>
+        <td class="mono">${r.series}×${r.reps}</td>
+        <td class="mono">${(+r.peso).toFixed(1)} kg</td>
+        <td class="mono">${r.rpe ?? ""}</td>
+        <td>${r.notas || ""}</td>
+        <td class="right">
+          <button data-id="${r.id}" class="btn-edit">Editar</button>
+          <button data-id="${r.id}" class="btn-del danger">Borrar</button>
+        </td>`;
+      body.appendChild(tr);
+    }
+    // acciones
+    $$(".btn-del").forEach(btn => btn.addEventListener("click", (e) => {
+      const id = e.target.getAttribute("data-id");
+      state.logs = state.logs.filter(x => x.id !== id);
+      save(); renderLogs();
+    }));
+    $$(".btn-edit").forEach(btn => btn.addEventListener("click", (e) => {
+      const id = e.target.getAttribute("data-id");
+      const r = state.logs.find(x => x.id === id);
+      if (!r) return;
+      $("#fFecha").value = r.fecha;
+      $("#fEj").value = r.ej;
+      $("#fSeries").value = r.series;
+      $("#fReps").value = r.reps;
+      $("#fPeso").value = r.peso;
+      $("#fRPE").value = r.rpe ?? "";
+      $("#fNotas").value = r.notas ?? "";
+      // al guardar, reemplaza (mantenemos mismo id; simplemente borramos y agregamos de nuevo)
+    }));
+  }
+
+  function toCSV(rows) {
+    const esc = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+    const header = ["fecha","ejercicio","series","reps","peso","rpe","notas"].map(esc).join(",");
+    const lines = rows.map(r => [r.fecha,r.ej,r.series,r.reps,r.peso,r.rpe ?? "", r.notas ?? ""].map(esc).join(","));
+    return [header, ...lines].join("\n");
+  }
+
+  function download(filename, text) {
+    const blob = new Blob([text], {type: "text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), { href:url, download:filename });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ------- Inicializar -------
+  (function init(){
+    // Plan + select + fecha
+    populatePlan(); populateSelect();
+    $("#fFecha").value = todayISO();
+    setVideo(EXERCISES[0].id);
+    $("#selEj").value = EXERCISES[0].id;
+    $("#fEj").value = EXERCISES[0].nombre;
+
+    // Cargar registros
+    load(); renderLogs();
+
+    // Botones plan
+    $("#btnAddAll").addEventListener("click", () => {
+      // prellenar el formulario con el primero del plan
+      $("#selEj").value = EXERCISES[0].id;
+      $("#fEj").value = EXERCISES[0].nombre;
+      setVideo(EXERCISES[0].id);
+    });
+    $("#btnResetPlan").addEventListener("click", () => {
+      populatePlan();
+    });
+
+    // Formulario guardar
+    $("#logForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const rec = {
+        id: crypto.randomUUID?.() || String(Date.now()),
+        fecha: $("#fFecha").value,
+        ej: $("#fEj").value.trim(),
+        series: parseInt($("#fSeries").value,10),
+        reps: parseInt($("#fReps").value,10),
+        peso: parseFloat($("#fPeso").value),
+        rpe: $("#fRPE").value ? parseInt($("#fRPE").value,10) : null,
+        notas: $("#fNotas").value.trim()
+      };
+      // si existe uno idéntico (misma fecha+ej+series+reps+peso+rpe+notas), no duplicar
+      const key = r => [r.fecha,r.ej,r.series,r.reps,r.peso,r.rpe,r.notas].join("|");
+      const exists = state.logs.some(x => key(x) === key(rec));
+      if (!exists) {
+        state.logs.push(rec); save(); renderLogs();
+      }
+      e.target.reset();
+      $("#fFecha").value = todayISO();
+      $("#fEj").value = EXERCISES.find(x=>x.id===$("#selEj").value)?.nombre || "";
+    });
+
+    // Filtros
+    $("#filtroTxt").addEventListener("input", e => { state.filter = e.target.value; renderLogs(); });
+    $("#btnClearFilter").addEventListener("click", () => { $("#filtroTxt").value=""; state.filter=""; renderLogs(); });
+
+    // Exportar / Demo / Borrar todo
+    $("#btnExport").addEventListener("click", () => {
+      if (!state.logs.length) { alert("No hay registros para exportar."); return; }
+      const csv = toCSV(state.logs);
+      const fname = `registros_gym_${todayISO()}.csv`;
+      download(fname, csv);
+    });
+
+    $("#btnDemo").addEventListener("click", () => {
+      const demo = [
+        {fecha: todayISO(), ej:"Sentadilla trasera", series:4, reps:8, peso:80, rpe:7, notas:"Última serie +1 rep"},
+        {fecha: todayISO(), ej:"Press de banca", series:4, reps:6, peso:70, rpe:8, notas:"Pausa 1s al pecho"},
+        {fecha: todayISO(), ej:"Remo con barra", series:3, reps:10, peso:55, rpe:7, notas:"Agarre prono"},
+      ].map(x => ({id: crypto.randomUUID?.() || String(Date.now()+Math.random()), ...x}));
+      state.logs.push(...demo); save(); renderLogs();
+    });
+
+    $("#btnClearAll").addEventListener("click", () => {
+      if (confirm("¿Borrar TODOS los registros? Esta acción no se puede deshacer.")) {
+        state.logs = []; save(); renderLogs();
+      }
+    });
+
+    // Acceso rápido desde la tabla de plan con teclado
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "v") { $("#fReps").focus(); }
+    });
+  })();
   </script>
 </body>
 </html>
